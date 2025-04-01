@@ -18,7 +18,7 @@ An interactive 3D timeline visualizer with scroll-based animation effects. This 
 
 ## Live Demo
 
-Check out the live demo [here](https://yourusername.github.io/3d-timeline/).
+Check out the live demo [here](https://yotamano.github.io/3d-timeline/).
 
 ## Usage
 
@@ -33,7 +33,7 @@ Check out the live demo [here](https://yourusername.github.io/3d-timeline/).
 Simply clone this repository and open `index.html` in your browser. No build process required.
 
 ```bash
-git clone https://github.com/yourusername/3d-timeline.git
+git clone https://github.com/yotamano/3d-timeline.git
 cd 3d-timeline
 # Open index.html in your browser
 ```
