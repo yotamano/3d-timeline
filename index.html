@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Timeline Scroll Animation</title>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.366.0/dist/umd/lucide.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Modes Toggle -->
+    <div class="modes-toggle">
+        <button class="mode-btn" data-mode="scene">Scene</button>
+        <button class="mode-btn active" data-mode="ui">UI</button>
+        <button class="mode-btn" data-mode="preview">Preview</button>
+    </div>
+    
+    <!-- Scene scroll progress indicator -->
+    <div class="scene-scroll-indicator">
+        <div class="scene-scroll-progress"></div>
+    </div>
+    
+    <!-- Scene Mode Split View Container -->
+    <div class="scene-mode-container">
+        <div class="editor-view">
+            <canvas id="editor-view-canvas"></canvas>
+            <div class="camera-indicator"></div>
+        </div>
+        
+        <!-- Floating Camera Preview -->
+        <div class="floating-camera-preview">
+            <div class="preview-drag-handle">Camera Preview</div>
+            <canvas id="camera-preview-canvas"></canvas>
+            <div class="preview-resize-handle"></div>
+        </div>
+    </div>
+    
+    <!-- Invisible scroll container for scene mode -->
+    <div class="scene-mode-scroll-container"></div>
+    
+    <div class="canvas-container">
+        <canvas id="scene"></canvas>
+    </div>
+    
+    <div class="scroll-container">
+        <div class="section" id="section1">
+            <div class="section-content">
+                <h2 class="section-title">Welcome to 3D Timeline</h2>
+                <p class="section-desc">Scroll down to explore an interactive 3D journey through our timeline. Each section brings new animations and perspectives to our 3D model.</p>
+            </div>
+        </div>
+        <div class="section" id="section2">
+            <div class="section-content">
+                <h2 class="section-title">Rotating Perspectives</h2>
+                <p class="section-desc">As we move through time, our perspective shifts. The model rotates to reveal different facets and details that were previously hidden from view.</p>
+            </div>
+        </div>
+        <div class="section" id="section3">
+            <div class="section-content">
+                <h2 class="section-title">Shifting Viewpoints</h2>
+                <p class="section-desc">Our journey continues as we move the camera around the scene, gaining new insights and viewpoints of our 3D environment.</p>
+            </div>
+        </div>
+        <div class="section" id="section4">
+            <div class="section-content">
+                <h2 class="section-title">Illuminating Changes</h2>
+                <p class="section-desc">Light plays a crucial role in perception. Watch as lighting changes alter the mood and emphasis of our 3D world, highlighting different aspects.</p>
+            </div>
+        </div>
+        <div class="section" id="section5">
+            <div class="section-content">
+                <h2 class="section-title">Final Transformation</h2>
+                <p class="section-desc">Our journey culminates in a final transformation, bringing together all the elements we've experienced into a harmonious conclusion.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="progress-container">
+        <div class="progress-dot" data-section="section1"></div>
+        <div class="progress-line"></div>
+        <div class="progress-dot" data-section="section2"></div>
+        <div class="progress-line"></div>
+        <div class="progress-dot" data-section="section3"></div>
+        <div class="progress-line"></div>
+        <div class="progress-dot" data-section="section4"></div>
+        <div class="progress-line"></div>
+        <div class="progress-dot" data-section="section5"></div>
+    </div>
+    
+    <div class="scroll-guide">
+        <p>Scroll to explore</p>
+        <div class="scroll-icon"></div>
+    </div>
+
+    <div class="timeline-panel collapsed">
+        <div class="timeline-content">
+            <!-- Timeline ruler with ticks and labels -->
+            <div class="timeline-ruler-area">
+                <div class="timeline-ruler-label-space">
+                    <button class="timeline-collapse-toggle" id="timeline-collapse-toggle"></button>
+                </div>
+                <div class="timeline-ruler-content">
+                    <div class="timeline-ticks">
+                        <!-- Generate 11 major ticks for 0% to 100% -->
+                        <div class="timeline-tick major"><span class="timeline-tick-label">0%</span></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick major"><span class="timeline-tick-label">20%</span></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick major"><span class="timeline-tick-label">40%</span></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick major"><span class="timeline-tick-label">60%</span></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick major"><span class="timeline-tick-label">80%</span></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick"></div>
+                        <div class="timeline-tick major"><span class="timeline-tick-label">100%</span></div>
+                    </div>
+                    <div class="timeline-passed-area" id="timeline-passed-area"></div>
+                    <div class="timeline-playhead" id="timeline-playhead">
+                        <div class="timeline-playhead-top"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Unified timeline container with rows -->
+            <div class="timeline-container" id="timeline-container">
+                <!-- Timeline rows will be generated dynamically -->
+            </div>
+            
+            <div class="add-property-container">
+                <button class="add-property-btn" id="add-property-btn">+ Add Property</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Material Preview Button -->
+    <div class="material-preview-button" id="material-preview-button">
+        <div class="material-preview-icon"></div>
+    </div>
+    
+    <!-- Material Panel -->
+    <div class="material-panel" id="material-panel">
+        <div class="material-panel-header">
+            <div class="material-panel-title">Fabric_R15</div>
+            <button class="close-material-panel" id="close-material-panel">&times;</button>
+        </div>
+        <div class="material-panel-content">
+            <!-- Material property controls -->
+            <div class="material-properties">
+                <div class="property-section">
+                    <div class="property-section-header">COLOR</div>
+                    <div class="color-picker-container">
+                        <div class="color-hex" id="material-color-hex">#FFFFFF</div>
+                        <div class="color-square" id="material-color-picker">
+                            <input type="color" id="material-color-input" style="opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="property-section">
+                    <div class="property-section-header">APPEARANCE</div>
+                    <div class="material-slider" id="metalness-slider">
+                        <div class="slider-track metalness"></div>
+                        <div class="slider-label">Metalness</div>
+                    </div>
+                    
+                    <div class="material-slider" id="roughness-slider">
+                        <div class="slider-track roughness"></div>
+                        <div class="slider-label">Roughness</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Material grid -->
+            <div class="material-grid" id="fabric-grid">
+                <!-- Material previews will be dynamically added here -->
+            </div>
+            
+            <div class="material-category-header">
+                <div class="material-category-icon">
+                    <div class="material-preview-swatch" style="background-color: #aaaaaa;"></div>
+                </div>
+                <div class="material-category-title">Metal Basic</div>
+                <div class="material-category-toggle">▼</div>
+            </div>
+            <div class="material-grid" id="metal-grid" style="display: none;">
+                <!-- Metal material previews will go here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for adding properties -->
+    <div class="modal" id="property-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add Property</div>
+                <button class="close-modal" id="close-property-modal">&times;</button>
+            </div>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label class="form-label">Element</label>
+                    <select class="form-select" id="element-selector">
+                        <option value="camera">Camera</option>
+                        <option value="model">3D Model</option>
+                        <option value="lights.main">Main Light</option>
+                        <option value="lights.accent">Accent Light</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Property</label>
+                    <select class="form-select" id="property-select">
+                        <option value="position">Position</option>
+                        <option value="rotation">Rotation</option>
+                        <option value="scale">Scale</option>
+                        <option value="intensity">Intensity</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button class="form-btn form-btn-cancel" id="cancel-property-btn">Cancel</button>
+                    <button class="form-btn form-btn-submit" id="submit-property-btn">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for adding keyframes -->
+    <div class="modal" id="keyframe-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Add Keyframe</div>
+                <button class="close-modal" id="close-keyframe-modal">&times;</button>
+            </div>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label class="form-label">Property</label>
+                    <select class="form-select" id="keyframe-property-select">
+                        <!-- Will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Scroll Position (%)</label>
+                    <input type="number" class="form-input" id="keyframe-position" min="0" max="100" value="0">
+                </div>
+                <div class="form-group" id="value-input-group">
+                    <label class="form-label">Value</label>
+                    <input type="number" class="form-input" id="keyframe-value" step="0.1" value="0">
+                </div>
+                <div class="form-group" id="color-input-group" style="display: none;">
+                    <label class="form-label">Color</label>
+                    <div class="color-input-container">
+                        <input type="color" class="form-input color-picker" id="keyframe-color" value="#ffffff">
+                        <input type="text" class="form-input color-text" id="keyframe-color-text" value="#ffffff">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="form-btn form-btn-cancel" id="cancel-keyframe-btn">Cancel</button>
+                    <button class="form-btn form-btn-submit" id="submit-keyframe-btn">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Selection Button -->
+    <div class="model-preview-button" id="model-preview-button">
+        <div class="model-preview-icon"></div>
+    </div>
+
+    <!-- Model Panel -->
+    <div class="model-panel" id="model-panel">
+        <div class="model-panel-header">
+            <div class="model-panel-title">3D Models</div>
+            <button class="close-model-panel" id="close-model-panel">&times;</button>
+        </div>
+        <div class="model-panel-content">
+            <div class="model-section-header">Basic Shapes</div>
+            <div class="model-grid" id="basic-models-grid">
+                <!-- Model previews will be dynamically added here -->
+            </div>
+            
+            <div class="model-category-header">
+                <div class="model-category-icon">
+                    <div class="model-preview-icon-small"></div>
+                </div>
+                <div class="model-category-title">Complex Shapes</div>
+                <div class="model-category-toggle">▼</div>
+            </div>
+            <div class="model-grid" id="complex-models-grid">
+                <!-- Complex model previews will go here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    <script src="app.js"></script>
+    <script src="animation-sequences.js"></script>
+    <script src="timeline-editor.js"></script>
+    <script>
+        // Initialize Lucide icons when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        });
+        
+        // Handle section highlighting and progress indicators
+        const sections = document.querySelectorAll('.section');
+        const progressDots = document.querySelectorAll('.progress-dot');
+        const scrollGuide = document.querySelector('.scroll-guide');
+        
+        // Initialize first section as active
+        sections[0].classList.add('active');
+        progressDots[0].classList.add('active');
+        
+        // Setup intersection observer for sections
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.5
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Hide scroll guide after first scroll
+                    scrollGuide.classList.add('hidden');
+                    
+                    // Update active section
+                    const activeSection = entry.target;
+                    const activeSectionId = activeSection.id;
+                    
+                    // Update section classes
+                    sections.forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    activeSection.classList.add('active');
+                    
+                    // Update progress indicators
+                    progressDots.forEach(dot => {
+                        dot.classList.remove('active');
+                        if (dot.dataset.section === activeSectionId) {
+                            dot.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, observerOptions);
+        
+        // Observe all sections
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+        
+        // Add click navigation to progress dots
+        progressDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const targetSection = document.getElementById(dot.dataset.section);
+                targetSection.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+        
+        // Animation sequence selector
+        document.addEventListener('DOMContentLoaded', function() {
+            const sequenceSelector = document.getElementById('sequence-selector');
+            
+            if (sequenceSelector && window.loadAnimationSequence) {
+                // Set initial sequence
+                window.loadAnimationSequence('cinematicReveal');
+                
+                // Handle sequence changes
+                sequenceSelector.addEventListener('change', function() {
+                    const selectedSequence = this.value;
+                    window.loadAnimationSequence(selectedSequence);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

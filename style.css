@@ -1,0 +1,1768 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+    font-family: 'Montserrat', sans-serif;
+    background-color: #0a0a0a;
+    color: #fff;
+}
+
+/* Modes Toggle Styles */
+.modes-toggle {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 30px;
+    padding: 3px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 2000;
+}
+
+.mode-btn {
+    padding: 8px 16px;
+    border-radius: 24px;
+    border: none;
+    background-color: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.mode-btn.active {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Scene Mode Split View Styles */
+.scene-mode-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    display: none;
+    z-index: 2;
+}
+
+body.scene-mode .scene-mode-container {
+    display: block;
+}
+
+.editor-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Floating Camera Preview Styles */
+.floating-camera-preview {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 30%;
+    height: 30%;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-drag-handle {
+    width: 100%;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    cursor: move;
+    user-select: none;
+    font-family: 'Inter', sans-serif;
+}
+
+.preview-resize-handle {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 14px;
+    height: 14px;
+    background-image: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.5) 50%);
+    cursor: nwse-resize;
+    z-index: 11;
+}
+
+#camera-preview-canvas {
+    width: 100%;
+    height: calc(100% - 30px);
+    display: block;
+}
+
+.camera-indicator {
+    position: absolute;
+    width: 40px;
+    height: 30px;
+    border: 2px solid rgba(0, 160, 255, 0.8);
+    border-radius: 4px;
+    transform-origin: center;
+    transform: translate(-50%, -50%);
+}
+
+.camera-indicator:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    width: 20px;
+    height: 0;
+    border-top: 1px dashed rgba(0, 160, 255, 0.8);
+    transform: translateY(-50%);
+}
+
+/* Add invisible scroll element for scene mode */
+.scene-mode-scroll-container {
+    width: 1px;
+    position: absolute;
+    z-index: -1;
+    opacity: 0;
+    pointer-events: none;
+}
+
+body.scene-mode .scene-mode-scroll-container {
+    height: 500vh; /* Same height as the main scroll container */
+}
+
+/* Remove hiding of scroll container in scene mode */
+body.scene-mode .scroll-container {
+    opacity: 0;
+    pointer-events: none;
+    height: 500vh; /* Ensure the height remains for scrolling */
+    display: block; /* Ensure it's still in the DOM flow */
+}
+
+/* Preview Mode Styles */
+body.preview-mode .timeline-panel,
+body.preview-mode .material-preview-button,
+body.preview-mode .material-panel,
+body.preview-mode .progress-container {
+    display: none !important;
+}
+
+/* Scene Mode - Hide UI Elements */
+body.scene-mode .section,
+body.scene-mode .scroll-guide {
+    display: none;
+}
+
+/* Hide canvas in scene mode since we'll use split view */
+body.scene-mode .canvas-container {
+    display: none;
+}
+
+/* Preview Mode - Show Only the Necessary Elements */
+body.preview-mode .section {
+    z-index: 11;
+}
+
+.scroll-container {
+    height: 500vh; /* Make the page tall enough for scrolling */
+    position: relative;
+}
+
+.canvas-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: 1;
+}
+
+.section {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+}
+
+.section-content {
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 2rem 3rem;
+    border-radius: 8px;
+    max-width: 600px;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: translateX(-50px);
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+
+.section.active .section-content {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #5e72eb, #ff9190);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 700;
+}
+
+.section-desc {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #ccc;
+}
+
+.progress-container {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.progress-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.progress-dot.active {
+    background-color: #fff;
+    transform: scale(1.3);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.progress-line {
+    width: 2px;
+    height: 30px;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.scroll-guide {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    text-align: center;
+    opacity: 1;
+    transition: opacity 1s ease;
+}
+
+.scroll-guide.hidden {
+    opacity: 0;
+}
+
+.scroll-guide p {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.scroll-icon {
+    width: 30px;
+    height: 50px;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 15px;
+    position: relative;
+    margin: 0 auto;
+}
+
+.scroll-icon:before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 8px;
+    border-radius: 50%;
+    animation: scrollAnim 1.5s infinite;
+}
+
+@keyframes scrollAnim {
+    0% {
+        top: 8px;
+        opacity: 1;
+    }
+    100% {
+        top: 30px;
+        opacity: 0;
+    }
+}
+
+/* Updated Timeline Panel Styles */
+.timeline-panel {
+    position: fixed;
+    bottom: 20px;
+    left: 50%; /* Center horizontally */
+    transform: translateX(-50%); /* Center horizontally with width compensation */
+    width: 70%; 
+    max-width: 900px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    padding: 6px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow: hidden; /* Changed from visible to hidden */
+    max-height: 80vh;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Slightly slower for smoother transition */
+    will-change: height; /* Performance optimization */
+}
+
+.timeline-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-height: 100px;
+    max-height: 400px;
+    overflow: hidden;
+    position: relative;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: 100%; /* Ensure full width */
+    transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1); /* Match panel transition */
+}
+
+/* Timeline Ruler Area */
+.timeline-ruler-area {
+    position: sticky;
+    top: 0;
+    flex-grow: 0;
+    flex-shrink: 0;
+    height: 24px;
+    display: flex;
+    z-index: 25;
+    width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: height 0.35s cubic-bezier(0.25, 1, 0.5, 1); /* Add transition for height */
+}
+
+.timeline-ruler-label-space {
+    width: 180px;
+    min-width: 180px;
+    flex-shrink: 0;
+    background-color: rgba(10, 10, 10, 0.4);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1); /* Add transition for size */
+}
+
+/* Add collapse toggle button */
+.timeline-collapse-toggle {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: none;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+/* Adjustments for collapsed state */
+.timeline-panel.collapsed .timeline-ruler-label-space {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px; /* Match the timeline-content height */
+    width: 60px; /* Make narrower in collapsed state */
+    min-width: 60px;
+    border-radius: 6px 0 0 6px; /* Match the border-radius of the timeline-ruler-area */
+}
+
+.timeline-panel.collapsed .timeline-collapse-toggle {
+    width: 30px;
+    height: 30px;
+}
+
+.timeline-collapse-toggle:hover {
+    background-color: rgba(94, 114, 235, 0.3);
+}
+
+.timeline-collapse-toggle::before {
+    content: '▼';
+    font-size: 10px;
+}
+
+.timeline-panel.collapsed .timeline-collapse-toggle::before {
+    content: '▲';
+    font-size: 12px;
+}
+
+/* Collapsed panel styles */
+.timeline-panel.collapsed {
+    height: 50px; /* Match material button height */
+    min-height: 50px;
+    overflow: hidden;
+    padding: 6px; /* Keep the same padding as expanded state */
+}
+
+.timeline-panel.collapsed .timeline-content {
+    min-height: 0;
+    height: 38px; /* 50px panel height minus 12px total padding */
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    width: 100%; /* Ensure full width */
+}
+
+.timeline-panel.collapsed .timeline-ruler-area {
+    height: 38px; /* Match the container height (accounting for padding) */
+    border-radius: 6px; /* Keep consistent with the expanded state border-radius */
+}
+
+.timeline-ruler-content {
+    flex-grow: 1;
+    position: relative;
+    background-color: rgba(18, 18, 18, 0.4);
+    width: calc(100% - 180px);
+    overflow: hidden;
+    transition: width 0.35s cubic-bezier(0.25, 1, 0.5, 1); /* Add transition for width */
+}
+
+/* Collapsed state ruler content width calculation */
+.timeline-panel.collapsed .timeline-ruler-content {
+    width: calc(100% - 60px); /* Adjust to match the collapsed label space width */
+}
+
+/* Timeline ticks adjustments with improved transitions */
+.timeline-ticks {
+    width: 100%;
+    height: 100%; /* Allow it to fill the ruler area */
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    background-color: rgba(24, 24, 24, 0.4);
+    overflow: hidden; /* Ensure no overflow */
+    transition: height 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.timeline-tick {
+    flex-grow: 1;
+    position: relative;
+    height: 100%;
+    transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.timeline-tick::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 12px;
+    height: 6px;
+    width: 1px;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.timeline-panel.collapsed .timeline-tick::after {
+    top: 50%;
+    transform: translateY(-50%);
+    height: 6px; /* Smaller tick in collapsed state */
+}
+
+.timeline-tick.major::after {
+    top: 10px;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+.timeline-panel.collapsed .timeline-tick.major::after {
+    top: 50%;
+    transform: translateY(-50%);
+    height: 10px; /* Taller tick for major markers */
+}
+
+.timeline-tick.major::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 24px;
+    height: 1000px;
+    width: 1px;
+    background-color: rgba(255, 255, 255, 0.07);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.timeline-panel.collapsed .timeline-tick.major::before {
+    display: none;
+}
+
+.timeline-tick.major .timeline-tick-label {
+    display: block;
+}
+
+/* Ensure tick labels don't cause overflow */
+.timeline-tick-label {
+    position: absolute;
+    right: -10px;
+    top: 4px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+    display: none;
+    max-width: 50px; /* Prevent extremely long labels from causing overflow */
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.timeline-panel.collapsed .timeline-tick-label {
+    top: 50%;
+    transform: translateY(-150%);
+    font-size: 0.6rem; /* Slightly smaller font in collapsed state */
+}
+
+.timeline-tick.major .timeline-tick-label {
+    display: block;
+}
+
+/* Timeline Container with staged transition */
+.timeline-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    min-height: 0;
+    padding-left: 0;
+    position: relative;
+    background-color: rgba(17, 17, 17, 0.2);
+    opacity: 1;
+    transition: opacity 0.25s cubic-bezier(0.25, 1, 0.5, 1); /* Fade out faster than panel resize */
+    will-change: opacity; /* Performance optimization */
+}
+
+/* Restore scrollbar styling */
+.timeline-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.timeline-container::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.timeline-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Fade out container when collapsed */
+.timeline-panel.collapsed .timeline-container {
+    opacity: 0;
+}
+
+/* Additional smooth transitions for ticks and other elements */
+.timeline-playhead-top {
+    position: absolute;
+    top: 0;
+    z-index: 21;
+    left: 0; 
+    width: 12px;
+    height: 12px;
+    background-color: #ff5a5a;
+    border-radius: 0 0 50% 50%;
+    transform: translateX(-50%);
+    pointer-events: all;
+    cursor: grab;
+    box-shadow: 0 0 8px rgba(255, 90, 90, 0.5);
+    transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1); /* Smooth playhead transition */
+}
+
+.timeline-panel.collapsed .timeline-playhead-top {
+    top: 50%; /* Center vertically */
+    transform: translate(-50%, -50%); /* Center both horizontally and vertically */
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.timeline-playhead-top:active {
+    cursor: grabbing;
+}
+
+/* Improve transition for timeline rows */
+.timeline-row {
+    display: flex;
+    border-bottom: none;
+    position: relative;
+    transition: background-color 0.25s ease, opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    min-height: 22px;
+}
+
+.timeline-row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.timeline-row.selected {
+    background-color: rgba(94, 114, 235, 0.1);
+}
+
+.timeline-row-header {
+    width: 180px;
+    min-width: 180px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 3px 8px;
+    background-color: transparent;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    height: 100%;
+    min-height: 22px;
+    position: relative;
+    z-index: 2;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.element-row > .timeline-row-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+}
+
+.property-row > .timeline-row-header {
+    padding-left: 24px;
+    font-weight: 500;
+    color: #d9d9d9;
+    font-size: 0.8rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.subprop-row > .timeline-row-header {
+    padding-left: 32px;
+    color: #999999;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Toggle and Label Styles */
+.timeline-toggle {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 2px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+/* Arrow icon for toggle */
+.timeline-toggle::before {
+    content: '▶';
+    transform: rotate(0deg);
+    transition: transform 0.2s ease;
+    font-size: 8px;
+    opacity: 0.7;
+}
+
+.timeline-toggle:hover::before {
+    opacity: 1;
+}
+
+/* Rotate arrow when expanded */
+.timeline-row.expanded > .timeline-row-header .timeline-toggle::before {
+    transform: rotate(90deg);
+}
+
+/* Hide toggle for property and subproperty rows */
+.property-row .timeline-toggle,
+.subprop-row .timeline-toggle {
+    visibility: hidden;
+}
+
+/* Adjust spacing for the timeline label */
+.timeline-label {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    margin-left: 4px;
+}
+
+.timeline-label-content {
+    display: flex;
+    align-items: center;
+}
+
+.timeline-label-spacer {
+    width: 16px;
+    flex-shrink: 0;
+}
+
+/* Subproperty Styles */
+.subproperty-label {
+    display: flex;
+    align-items: center;
+    font-size: 0.75rem;
+    justify-content: space-between;
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+}
+
+.subprop-name {
+    color: inherit;
+    margin-right: 6px;
+    min-width: 10px;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.subprop-value {
+    margin-left: 5px;
+    padding: 2px 4px;
+    background-color: transparent;
+    border-radius: 0;
+    min-width: 40px;
+    display: inline-block;
+    text-align: right;
+    font-family: 'Consolas', monospace;
+    font-size: 0.75rem;
+    color: #fff;
+}
+
+/* Keyframe indicator button */
+.keyframe-indicator {
+    width: 10px;
+    height: 10px;
+    transform: rotate(45deg);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background-color: transparent;
+    display: inline-block;
+    margin-left: 8px;
+    margin-right: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.keyframe-indicator:hover {
+    transform: rotate(45deg) scale(1.2);
+    border-color: #ffffff;
+}
+
+.keyframe-indicator.active {
+    background-color: #ffffff;
+    border-color: #ffffff;
+}
+
+.keyframe-indicator.x-axis.active {
+    background-color: #53a5fb;
+    border-color: #53a5fb;
+}
+
+.keyframe-indicator.y-axis.active {
+    background-color: #53a5fb;
+    border-color: #53a5fb;
+}
+
+/* Timeline Panel Layout */
+.timeline-row-content {
+    flex-grow: 1;
+    position: relative;
+    min-height: 22px;
+    background-color: transparent;
+    overflow: hidden;
+    width: 100%;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 5% 100%;
+    background-position: left;
+}
+
+/* Inset property/subproperty rows */
+.property-row::before,
+.subprop-row::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.property-row::after {
+    display: none;
+}
+
+.subprop-row::after {
+    display: none;
+}
+
+/* Create a container for label and value */
+.label-value-container {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+/* Remove the keyframe count */
+.keyframe-count {
+    display: none;
+}
+
+/* Updated Color preview for color values */
+.color-preview {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    margin-right: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    vertical-align: middle;
+    box-shadow: none;
+}
+
+/* Color picker styles */
+.color-input-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.color-picker {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.color-text {
+    flex-grow: 1;
+    font-family: monospace;
+    letter-spacing: 1px;
+}
+
+/* Subproperty Colors */
+.subprop-x {
+    color: #5e72eb;
+}
+
+.subprop-y {
+    color: #ff9190;
+}
+
+.subprop-z {
+    color: #42d392;
+}
+
+/* Keyframe Styles */
+.keyframe {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #5e72eb;
+    z-index: 10;
+    margin-left: -5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 4px rgba(94, 114, 235, 0.5);
+}
+
+.keyframe:hover {
+    transform: translateY(-50%) scale(1.2);
+    box-shadow: 0 0 8px rgba(94, 114, 235, 0.7);
+}
+
+/* Color the different axis keyframes */
+.keyframe-x {
+    background-color: #5e72eb;
+    box-shadow: 0 0 4px rgba(94, 114, 235, 0.5);
+}
+
+.keyframe-y {
+    background-color: #ff9190;
+    box-shadow: 0 0 4px rgba(255, 145, 144, 0.5);
+}
+
+.keyframe-z {
+    background-color: #42d392;
+    box-shadow: 0 0 4px rgba(66, 211, 146, 0.5);
+}
+
+.keyframe-value {
+    background-color: #ffbe3f;
+    box-shadow: 0 0 4px rgba(255, 190, 63, 0.5);
+}
+
+/* Keyframe tooltip */
+.keyframe-tooltip {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-family: 'Consolas', monospace;
+    z-index: 100;
+}
+
+.keyframe:hover .keyframe-tooltip {
+    opacity: 1;
+}
+
+/* Playhead Styles */
+.timeline-playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    height: 100%;
+    width: 2px;
+    background-color: #ff5a5a;
+    z-index: 20;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(255, 90, 90, 0.5);
+    max-width: 100%; /* Ensure it doesn't exceed container width */
+}
+
+/* Add transition for passed area */
+.timeline-passed-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background-color: #555555;
+    opacity: 0.25;
+    z-index: 5;
+    pointer-events: none;
+    max-width: 100%; /* Ensure it doesn't exceed container width */
+}
+
+/* Add Property Button */
+.add-property-container {
+    display: none;
+}
+
+/* Modal for adding properties */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: rgba(255, 255, 255, 0.03);
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.modal-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-label {
+    font-size: 0.8rem;
+    color: #ccc;
+}
+
+.form-input, .form-select {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.form-btn {
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.form-btn-cancel {
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.form-btn-submit {
+    background-color: #5e72eb;
+    border: none;
+    color: #fff;
+}
+
+/* Button styles */
+.btn {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn.primary {
+    background-color: rgba(51, 102, 204, 0.8);
+}
+
+.btn.primary:hover {
+    background-color: rgba(68, 119, 221, 0.9);
+}
+
+.btn.secondary {
+    background-color: #555;
+}
+
+.btn.secondary:hover {
+    background-color: #666;
+}
+
+/* Add icon styles */
+.timeline-icon {
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    flex-shrink: 0;
+}
+
+.lucide-icon {
+    width: 14px;
+    height: 14px;
+    stroke-width: 1.5;
+}
+
+.element-row .timeline-icon {
+    color: #5e72eb;
+}
+
+.element-row .lucide-icon {
+    stroke: #5e72eb;
+}
+
+.property-row .timeline-icon {
+    color: #ff9190;
+}
+
+.property-row .lucide-icon {
+    stroke: #ff9190;
+}
+
+/* Add button style */
+.add-inline-btn {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.timeline-row-header:hover .add-inline-btn {
+    opacity: 1;
+}
+
+.add-inline-btn:hover {
+    background-color: rgba(94, 114, 235, 0.3);
+    transform: scale(1.1);
+}
+
+/* Popover styles */
+.popover {
+    position: fixed;
+    z-index: 2000;
+    width: 150px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    display: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeIn 0.15s ease-in-out;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.popover-title {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #ccc;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.popover-content {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.popover-item {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    color: #eee;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.15s ease;
+}
+
+.popover-item:hover {
+    background-color: rgba(94, 114, 235, 0.2);
+}
+
+.popover-item-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 8px;
+    opacity: 0.7;
+}
+
+/* Material Preview Button */
+.material-preview-button {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.material-preview-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.material-preview-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    background-color: transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Material Panel */
+.material-panel {
+    position: fixed;
+    bottom: 80px;
+    left: 20px;
+    width: 280px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    z-index: 1001;
+    display: none;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-family: 'Inter', sans-serif;
+}
+
+.material-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(10, 10, 10, 0.3);
+}
+
+.material-panel-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+}
+
+.close-material-panel {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.close-material-panel:hover {
+    color: #ff5a5a;
+}
+
+.material-panel-content {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.material-properties {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: rgba(10, 10, 10, 0.2);
+}
+
+.property-section {
+    margin-bottom: 20px;
+}
+
+.property-section-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+}
+
+/* Color picker styling */
+.color-picker-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.color-hex {
+    font-family: monospace;
+    font-size: 0.9rem;
+    margin-right: 10px;
+    flex-grow: 1;
+}
+
+.color-square {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Material slider styling */
+.material-slider {
+    width: 100%;
+    position: relative;
+    height: 37px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.slider-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #fff;
+    z-index: 2;
+    text-transform: none;
+    font-weight: 400;
+    font-family: 'Inter', sans-serif;
+    pointer-events: none;
+}
+
+.slider-track {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Material grid */
+.material-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 8px;
+}
+
+.material-preview {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    cursor: pointer;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.material-preview:hover {
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.material-preview.selected {
+    border: 2px solid #0088ff;
+    box-shadow: 0 0 8px rgba(0, 136, 255, 0.5);
+}
+
+.material-category-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    background-color: rgba(10, 10, 10, 0.4);
+    font-family: 'Inter', sans-serif;
+}
+
+.material-category-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.material-preview-swatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.material-category-title {
+    flex-grow: 1;
+    font-size: 0.85rem;
+}
+
+.material-category-toggle {
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
+}
+
+/* Model Preview Button - Place it to the right of material button */
+.model-preview-button {
+    position: fixed;
+    bottom: 20px;
+    left: 80px; /* 20px (margin) + 50px (material button width) + 10px (spacing) */
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.model-preview-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.model-preview-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    background-color: transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Model Panel */
+.model-panel {
+    position: fixed;
+    bottom: 80px;
+    left: 80px;
+    width: 280px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    z-index: 1001;
+    display: none;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-family: 'Inter', sans-serif;
+}
+
+.model-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(10, 10, 10, 0.3);
+}
+
+.model-panel-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+}
+
+.close-model-panel {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.close-model-panel:hover {
+    color: #ff5a5a;
+}
+
+.model-panel-content {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.model-section-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 16px 0 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    font-family: 'Inter', sans-serif;
+    text-align: center;
+}
+
+.model-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 8px;
+}
+
+.model-preview {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 6px;
+    cursor: pointer;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+}
+
+.model-preview:hover {
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.model-preview.selected {
+    border: 2px solid #0088ff;
+    box-shadow: 0 0 8px rgba(0, 136, 255, 0.5);
+}
+
+.model-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.model-category-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: rgba(10, 10, 10, 0.2);
+    cursor: pointer;
+}
+
+.model-category-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.model-preview-icon-small {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background-color: rgba(100, 100, 100, 0.4);
+}
+
+.model-category-title {
+    flex-grow: 1;
+    font-size: 0.85rem;
+}
+
+.model-category-toggle {
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
+}
+
+/* Add scroll progress indicator for scene mode */
+.scene-scroll-indicator {
+    position: fixed;
+    top: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    z-index: 2001;
+    display: none;
+}
+
+.scene-scroll-progress {
+    height: 100%;
+    width: 0%;
+    background-color: rgba(0, 160, 255, 0.8);
+    border-radius: 2px;
+    transition: width 0.1s ease;
+}
+
+body.scene-mode .scene-scroll-indicator {
+    display: block;
+}
+
+/* Material controls row */
+.material-controls-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* Material control buttons */
+.material-control-button {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 10px 12px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    flex: 1;
+    margin-bottom: 10px;
+    transition: background-color 0.2s;
+    color: #fff;
+}
+
+.material-control-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.material-control-button.active {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.material-control-button.full-width {
+    width: 100%;
+}
+
+/* Material category styling */
+.material-category-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    background-color: rgba(10, 10, 10, 0.4);
+    font-family: 'Inter', sans-serif;
+}
